@@ -14,10 +14,8 @@ import { BucketType, PhotoType } from "./helpers/models";
 import { useCounters } from "./context/CountersContext";
 import Link from "next/link";
 import { useAuth } from "./context/AuthContext";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CONFIG } from "./helpers";
-import { History as HistoryIcon } from "lucide-react";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -26,7 +24,6 @@ export default function Home() {
   const [lastPhoto, setLastPhoto] = useState<PhotoType | null>(null);
   const { values } = useCounters();
   const { user } = useAuth();
-  const router = useRouter();
   const since = Object.keys(values.values.year)[0] || new Date().getFullYear();
 
   useEffect(() => {
@@ -119,9 +116,9 @@ export default function Home() {
         <div className="grid-cols-1 text-center w-full max-w-sm mx-auto">
           <Image
             className="mx-auto m-4 dark:invert opacity-80 pointer-events-none"
-            src="/aperture.svg"
-            width={60}
-            height={60}
+            src="/apperture.svg"
+            width={80}
+            height={80}
             alt="Logo"
           />
           <h1 className="text-4xl font-thin">{CONFIG.title}</h1>

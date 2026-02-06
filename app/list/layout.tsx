@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../firebase";
-import { Plus, X, Menu, Settings } from "lucide-react";
+import { Plus, X, Menu, Settings, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -205,7 +205,7 @@ export default function ListLayout({
                 {/* text-xl font-bold text-foreground hover:text-primary transition-colors */}
                 <Image
                   className="dark:invert opacity-80"
-                  src="/aperture.svg"
+                  src="/apperture.svg"
                   width={32}
                   height={32}
                   alt="Logo"
@@ -230,6 +230,13 @@ export default function ListLayout({
             >
               <Home className="h-4 w-4" />
               Home
+            </Link>
+            <Link
+              href="/list"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:bg-accent"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              List
             </Link>
             {user.email && CONFIG.familyMap.has(user.email) && (
               <Link
@@ -285,7 +292,7 @@ export default function ListLayout({
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
-                Default Headline
+                Apply Headline
               </label>
               <div className="relative">
                 <Input
@@ -328,7 +335,7 @@ export default function ListLayout({
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
-                Default Tags
+                Merge Tags
               </label>
               <div className="relative">
                 <Combobox

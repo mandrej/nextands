@@ -5,19 +5,43 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "apphosting": {
-    "backendId": "nextands",
-    "rootDir": "/",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log",
-      "functions"
-    ]
-  },
+  "apphosting": [
+    {
+      "backendId": "nextands",
+      "rootDir": "/",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "nextands",
+      "rootDir": "/",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ],
   "storage": {
     "rules": "storage.rules"
+  },
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
   },
   "emulators": {
     "auth": {
@@ -32,17 +56,14 @@
     "ui": {
       "enabled": true
     },
-    "singleProjectMode": true
-  },
-  "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "frameworksBackend": {
-      "region": "us-central1"
+    "singleProjectMode": true,
+    "apphosting": {
+      "port": 5002,
+      "rootDirectory": "./",
+      "startCommand": "npm run dev"
+    },
+    "hosting": {
+      "port": 5000
     }
   }
 }

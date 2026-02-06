@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BUILD_ID: buildId,
   },
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 180,
     remotePatterns: [
       {
         protocol: "https",

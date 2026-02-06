@@ -115,7 +115,7 @@ export default function Home() {
       <div className="flex items-center justify-center p-4 bg-background">
         <div className="grid-cols-1 text-center w-full max-w-sm mx-auto">
           <Image
-            className="mx-auto m-4 dark:invert opacity-80 pointer-events-none"
+            className="mx-auto m-4 opacity-80 pointer-events-none"
             src="/apperture.svg"
             width={80}
             height={80}

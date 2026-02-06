@@ -204,7 +204,7 @@ export default function ListLayout({
               <Link href="/" className="flex items-center">
                 {/* text-xl font-bold text-foreground hover:text-primary transition-colors */}
                 <Image
-                  className="dark:invert opacity-80"
+                  className="opacity-80"
                   src="/apperture.svg"
                   width={32}
                   height={32}

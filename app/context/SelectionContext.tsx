@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 
 interface SelectionContextType {
   selectedIds: string[];
@@ -16,19 +22,31 @@ const SelectionContext = createContext<SelectionContextType | undefined>(
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
-  };
+  }, []);
 
-  const clearSelection = () => setSelectedIds([]);
-  const isSelected = (id: string) => selectedIds.includes(id);
+  const clearSelection = useCallback(() => setSelectedIds([]), []);
+
+  const isSelected = useCallback(
+    (id: string) => selectedIds.includes(id),
+    [selectedIds],
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      selectedIds,
+      toggleSelection,
+      clearSelection,
+      isSelected,
+    }),
+    [selectedIds, toggleSelection, clearSelection, isSelected],
+  );
 
   return (
-    <SelectionContext.Provider
-      value={{ selectedIds, toggleSelection, clearSelection, isSelected }}
-    >
+    <SelectionContext.Provider value={contextValue}>
       {children}
     </SelectionContext.Provider>
   );

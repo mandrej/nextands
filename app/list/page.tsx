@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   getDocs,
@@ -16,7 +16,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { photoCollection } from "../helpers/collections";
-import { PhotoType } from "../helpers/models";
+import { PhotoType, MyUserType } from "../helpers/models";
 import { useFilter } from "../context/FilterContext";
 import { useAuth } from "../context/AuthContext";
 import Lightbox from "yet-another-react-lightbox";
@@ -41,6 +41,108 @@ import { useCounters } from "../context/CountersContext";
 import { toast } from "sonner";
 
 import { Suspense } from "react";
+
+const PhotoCard = memo(
+  ({
+    photo,
+    index,
+    onOpen,
+    onEdit,
+    isSelected,
+    toggleSelection,
+    user,
+  }: {
+    photo: PhotoType & { id: string };
+    index: number;
+    onOpen: (index: number) => void;
+    onEdit: (e: React.MouseEvent, photo: PhotoType & { id: string }) => void;
+    isSelected: boolean;
+    toggleSelection: (id: string) => void;
+    user: MyUserType | null;
+  }) => {
+    const isAdmin = user?.isAdmin;
+    const isOwner = user?.email && user.email === photo.email;
+    const canManage = isAdmin || isOwner;
+
+    return (
+      <li
+        onClick={() => onOpen(index)}
+        className="relative w-full max-w-[400px] aspect-square rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group bg-card cursor-pointer transform-gpu"
+      >
+        {photo.thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo.thumb}
+            alt={photo.headline || photo.filename}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground font-medium">
+            No Thumb
+          </div>
+        )}
+
+        {canManage && (
+          <>
+            <div
+              className="absolute top-2 right-2 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => toggleSelection(photo.id)}
+                className="size-7 rounded-full bg-black/50 hover:bg-primary border-white/50 data-[state=checked]:bg-primary transition-all duration-200"
+              />
+            </div>
+            <button
+              onClick={(e) => onEdit(e, photo)}
+              className="absolute left-2 top-2 p-2 rounded-full bg-black/50 hover:bg-primary border-white/50 text-white transition-all duration-200 z-10"
+              title="Edit photo"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                />
+              </svg>
+            </button>
+          </>
+        )}
+
+        <div className="absolute bottom-0 text-white p-4 w-full bg-linear-to-t from-black/70 to-transparent z-1">
+          <p className="text-sm font-semibold truncate">
+            {photo.headline || photo.filename}
+          </p>
+          <p className="text-xs opacity-75">
+            {photo.date
+              ? new Date(photo.date)
+                  .toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                  .replace(/\//g, ".")
+              : ""}
+          </p>
+        </div>
+      </li>
+    );
+  },
+);
+
+PhotoCard.displayName = "PhotoCard";
 
 function ListPageContent() {
   const [photos, setPhotos] = useState<(PhotoType & { id: string })[]>([]);
@@ -206,17 +308,17 @@ function ListPageContent() {
     }
   }, [searchParams, photos, index]);
 
-  const handleEditClick = (
-    e: React.MouseEvent,
-    photo: PhotoType & { id: string },
-  ) => {
-    e.stopPropagation();
-    if (!(user?.isAdmin || (user?.email && user.email === photo.email))) {
-      return;
-    }
-    setPhotoToEdit(photo);
-    setEditModalOpen(true);
-  };
+  const handleEditClick = useCallback(
+    (e: React.MouseEvent, photo: PhotoType & { id: string }) => {
+      e.stopPropagation();
+      if (!(user?.isAdmin || (user?.email && user.email === photo.email))) {
+        return;
+      }
+      setPhotoToEdit(photo);
+      setEditModalOpen(true);
+    },
+    [user],
+  );
 
   const handleEditSave = async (updates: PhotoType) => {
     if (photoToEdit) {
@@ -267,24 +369,32 @@ function ListPageContent() {
     setPhotoToEdit(null);
   };
 
-  const openLightbox = (photoIndex: number) => {
-    setIndex(photoIndex);
-    const photoId = photos[photoIndex]?.id;
-    if (photoId) {
-      isUpdatingUrl.current = true;
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("photo", photoId);
-      router.push(`?${params.toString()}`, { scroll: false });
-    }
-  };
+  const photosRef = useRef(photos);
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
 
-  const closeLightbox = () => {
+  const openLightbox = useCallback(
+    (photoIndex: number) => {
+      setIndex(photoIndex);
+      const photoId = photosRef.current[photoIndex]?.id;
+      if (photoId) {
+        isUpdatingUrl.current = true;
+        const params = new URLSearchParams(window.location.search);
+        params.set("photo", photoId);
+        router.push(`?${params.toString()}`, { scroll: false });
+      }
+    },
+    [router],
+  );
+
+  const closeLightbox = useCallback(() => {
     setIndex(-1);
     isUpdatingUrl.current = true;
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     params.delete("photo");
     router.push(`?${params.toString()}`, { scroll: false });
-  };
+  }, [router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center">
@@ -298,76 +408,16 @@ function ListPageContent() {
           )}
         >
           {photos.map((photo, i) => (
-            <li
+            <PhotoCard
               key={photo.id}
-              onClick={() => openLightbox(i)}
-              className="relative w-full max-w-[400px] aspect-square rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group bg-card cursor-pointer"
-              style={{
-                backgroundImage: photo.thumb ? `url(${photo.thumb})` : "none",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {(user?.isAdmin ||
-                (user?.email && user.email === photo.email)) && (
-                <div
-                  className="absolute top-2 right-2 z-10"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Checkbox
-                    checked={isSelected(photo.id)}
-                    onCheckedChange={() => toggleSelection(photo.id)}
-                    className="size-7 rounded-full bg-black/50 hover:bg-primary border-white/50 data-[state=checked]:bg-primary transition-all duration-200"
-                  />
-                </div>
-              )}
-              {(user?.isAdmin ||
-                (user?.email && user.email === photo.email)) && (
-                <button
-                  onClick={(e) => handleEditClick(e, photo)}
-                  className="absolute left-2 top-2 p-2 rounded-full bg-black/50 hover:bg-primary border-white/50 text-white transition-all duration-200 z-10"
-                  title="Edit photo"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                    />
-                  </svg>
-                </button>
-              )}
-              {!photo.thumb && (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  No Thumb
-                </div>
-              )}
-              <div className="absolute bottom-0 text-white p-4 w-full bg-linear-to-t from-black/70 to-transparent">
-                <p className="text-sm font-semibold truncate">
-                  {photo.headline || photo.filename}
-                </p>
-                <p className="text-xs opacity-75">
-                  {photo.date
-                    ? new Date(photo.date)
-                        .toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "numeric",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                        .replace(/\//g, ".")
-                    : ""}
-                </p>
-              </div>
-            </li>
+              photo={photo}
+              index={i}
+              onOpen={openLightbox}
+              onEdit={handleEditClick}
+              isSelected={isSelected(photo.id)}
+              toggleSelection={toggleSelection}
+              user={user}
+            />
           ))}
         </ul>
 

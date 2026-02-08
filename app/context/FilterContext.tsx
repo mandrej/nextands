@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 
 export interface FilterState {
   year: string | null;
@@ -40,14 +46,24 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined);
 export function FilterProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<FilterState>(initialFilters);
 
-  const resetFilters = () => setFilters(initialFilters);
-  const triggerRefresh = () =>
-    setFilters((prev) => ({ ...prev, refreshKey: prev.refreshKey + 1 }));
+  const resetFilters = useCallback(() => setFilters(initialFilters), []);
+  const triggerRefresh = useCallback(
+    () => setFilters((prev) => ({ ...prev, refreshKey: prev.refreshKey + 1 })),
+    [],
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      filters,
+      setFilters,
+      resetFilters,
+      triggerRefresh,
+    }),
+    [filters, resetFilters, triggerRefresh],
+  );
 
   return (
-    <FilterContext.Provider
-      value={{ filters, setFilters, resetFilters, triggerRefresh }}
-    >
+    <FilterContext.Provider value={contextValue}>
       {children}
     </FilterContext.Provider>
   );

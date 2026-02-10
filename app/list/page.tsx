@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, memo } from "react";
+import { useEffect, useState, useRef, useCallback, memo, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   getDocs,
@@ -396,6 +396,18 @@ function ListPageContent() {
     router.push(`?${params.toString()}`, { scroll: false });
   }, [router]);
 
+  const slides = useMemo(
+    () =>
+      photos.map((photo) => ({
+        src: photo.url,
+        title: photo.headline || photo.filename,
+        description: photo.date as string,
+        width: photo.dim?.[0],
+        height: photo.dim?.[1],
+      })),
+    [photos],
+  );
+
   return (
     <main className="flex min-h-screen flex-col items-center">
       <div className="w-full">
@@ -441,13 +453,7 @@ function ListPageContent() {
               }
             },
           }}
-          slides={photos.map((photo) => ({
-            src: photo.url,
-            title: photo.headline || photo.filename,
-            description: photo.date as string,
-            width: photo.dim?.[0],
-            height: photo.dim?.[1],
-          }))}
+          slides={slides}
         />
         {hasMore && (
           <div ref={loader} className="p-4 text-center text-muted-foreground">

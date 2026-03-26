@@ -49,7 +49,7 @@ export const CONFIG = {
   //   notifyUrl: process.env.DEV
   //     ? 'http://localhost:5001/andrejevici/us-central1/notify'
   //     : 'https://notify-hq2yjfmwca-uc.a.run.app',
-  storageBucket: "andrejevici.appspot.com",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   thumbnails: "thumbnails",
   photo_filter: ["year", "month", "tags", "model", "lens", "email", "nick"],
   adminMap: new Map<string, string>()

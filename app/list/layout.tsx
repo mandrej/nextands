@@ -296,7 +296,7 @@ export default function ListLayout({
               </label>
               <div className="relative">
                 <Input
-                  placeholder="to apply to all photos..."
+                  placeholder="to all selected..."
                   value={values.headlineToApply}
                   onChange={(e) =>
                     setValues((prev) => ({

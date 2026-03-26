@@ -15,7 +15,7 @@ import { useCounters } from "./context/CountersContext";
 import Link from "next/link";
 import { useAuth } from "./context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { CONFIG } from "./helpers";
+import { CONFIG, version } from "./helpers";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -92,24 +92,12 @@ export default function Home() {
         }}
       >
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-
-        <Button
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const { getAuth, signInWithPopup, GoogleAuthProvider, signOut } =
-              await import("firebase/auth");
-            const auth = getAuth();
-            if (auth.currentUser) {
-              await signOut(auth);
-            } else {
-              await signInWithPopup(auth, new GoogleAuthProvider());
-            }
-          }}
-          className="absolute top-4 left-4 z-20 px-4 py-3 rounded-full hover:opacity-80 transition-all font-medium"
-        >
-          {user ? `Sign Out ${user.name}` : "Sign In"}
-        </Button>
+        {!lastPhoto && (
+          <div className="text-center p-6 z-10">
+            <p className="text-destructive text-lg font-medium">No photos found</p>
+            <p className="text-muted-foreground text-sm">Be the first to upload!</p>
+          </div>
+        )}
       </Link>
 
       <div className="flex items-center justify-center p-4 bg-background">
@@ -121,11 +109,42 @@ export default function Home() {
             height={80}
             alt="Logo"
           />
+          <p className="text-sm text-muted-foreground">Built: {version()}</p>
           <h1 className="text-4xl font-thin">{CONFIG.title}</h1>
           {bucket && (
             <p className="mt-2 text-sm text-muted-foreground mb-6">
               {bucket.count} photos since {since} and counting
             </p>
+          )}
+
+          {user ? (
+            <Button
+              variant="ghost"
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const { getAuth, signOut } = await import("firebase/auth");
+                const auth = getAuth();
+                await signOut(auth);
+              }}
+              className="mt-4 rounded-full hover:opacity-80 transition-all font-medium"
+            >
+              Sign Out {user.name}
+            </Button>
+          ) : (
+            <Button
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const { getAuth, signInWithPopup, GoogleAuthProvider } =
+                  await import("firebase/auth");
+                const auth = getAuth();
+                await signInWithPopup(auth, new GoogleAuthProvider());
+              }}
+              className="mt-4 rounded-full hover:opacity-80 transition-all font-medium"
+            >
+              Sign In
+            </Button>
           )}
 
           <div className="fixed bottom-4 right-4 z-20">

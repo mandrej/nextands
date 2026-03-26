@@ -536,7 +536,7 @@ export default function AddPage() {
               {file.status !== "uploading" && (
                 <button
                   onClick={() => removeFile(file.id)}
-                  className="p-1.5 bg-black/50 hover:bg-red-500 text-white rounded-full backdrop-blur-md transition-all shadow-lg"
+                  className="p-1.5 bg-black/50 hover:bg-red-500 text-white rounded backdrop-blur-md transition-all shadow-lg"
                   title="Remove file"
                 >
                   <X className="w-4 h-4" />
@@ -549,7 +549,7 @@ export default function AddPage() {
               {file.status === "completed" && !file.published && (
                 <button
                   onClick={() => handlePublishClick(file)}
-                  className="p-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full backdrop-blur-md transition-all shadow-lg"
+                  className="p-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded backdrop-blur-md transition-all shadow-lg"
                   title="Publish to gallery"
                 >
                   <Rocket className="w-4 h-4" />

@@ -93,12 +93,12 @@ const PhotoCard = memo(
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => toggleSelection(photo.id)}
-                className="size-7 rounded-full bg-black/50 hover:bg-primary border-white/50 data-[state=checked]:bg-primary transition-all duration-200"
+                className="size-7 bg-black/50 hover:bg-primary border-white/50 data-[state=checked]:bg-primary transition-all duration-200"
               />
             </div>
             <button
               onClick={(e) => onEdit(e, photo)}
-              className="absolute left-2 top-2 p-2 rounded-full bg-black/50 hover:bg-primary border-white/50 text-white transition-all duration-200 z-10"
+              className="absolute left-2 top-2 p-2 rounded bg-black/50 hover:bg-primary border-white/50 text-white transition-all duration-200 z-10"
               title="Edit photo"
             >
               <svg

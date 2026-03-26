@@ -14,18 +14,9 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "nextands",
-      "rootDir": "/",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
+        "functionCron",
+        "functionNotify",
+        "functionThumb"
       ]
     }
   ],
@@ -34,11 +25,7 @@
   },
   "hosting": {
     "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
       "region": "us-central1"
     }
@@ -53,6 +40,9 @@
     "storage": {
       "port": 9199
     },
+    "functions": {
+      "port": 5001
+    },
     "ui": {
       "enabled": true
     },
@@ -65,5 +55,37 @@
     "hosting": {
       "port": 5000
     }
-  }
+  },
+  "functions": [
+    {
+      "source": "functionCron",
+      "codebase": "function-cron",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    },
+    {
+      "source": "functionNotify",
+      "codebase": "function-notify",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    },
+    {
+      "source": "functionThumb",
+      "codebase": "function-thumb",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
 }

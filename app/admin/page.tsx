@@ -45,6 +45,12 @@ export default function SettingsPage() {
   }, [fetchBucket]);
 
   const stats = [
+    {
+      name: "Total Photos",
+      field: "bucket",
+      value: bucket?.count || 0,
+      size: bucket?.size,
+    },
     { name: "Total Years", field: "year", value: counts["year"] || 0 },
     { name: "Unique Tags", field: "tags", value: counts["tags"] || 0 },
     { name: "Camera Models", field: "model", value: counts["model"] || 0 },
@@ -146,99 +152,66 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-8 p-4 pt-8 max-w-7xl mx-auto w-full">
-      <div className="w-full space-y-6">
+    <div className="w-full space-y-8 pb-20">
         <div className="bg-card p-6 shadow rounded-lg border border-border">
-          <h3 className="text-lg font-medium leading-6 text-foreground flex items-center gap-2">
+          <h3 className="pb-4 text-lg font-medium leading-6 text-foreground flex items-center gap-2">
             <Database className="h-5 w-5 text-muted-foreground" />
-            System Metadata
+            System metadata and resource counts.
           </h3>
-          <div className="mt-4 max-w-sm">
-            <div className="overflow-hidden rounded-lg bg-muted px-4 py-5 shadow sm:p-6 relative group">
-              <dt className="truncate text-sm font-medium text-muted-foreground flex justify-between items-center">
-                Total Bucket Size & Count
-              </dt>
-              <dd className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-semibold text-foreground">
-                  {bucket?.count || 0}
-                </span>
-                <span className="text-sm text-muted-foreground">photos</span>
-                <span className="mx-2 text-border">|</span>
-                <span className="text-2xl font-semibold text-foreground">
-                  {bucket
-                    ? new Intl.NumberFormat("en", {
-                        notation: "compact",
-                        style: "unit",
-                        unit: "byte",
-                        unitDisplay: "narrow",
-                      }).format(bucket.size)
-                    : "0 B"}
-                </span>
-              </dd>
-              <dd className="mt-4 flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  Total storage used by original images.
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={loadingField !== null}
-                  onClick={recreateBucket}
-                  className="gap-2"
-                >
-                  {loadingField === "bucket" ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
+          <div className="overflow-hidden rounded-lg bg-muted/50 shadow border border-border">
+            <ul className="grid grid-cols-1 sm:grid-cols-2">
+              {stats.map((item, index) => (
+                <li
+                  key={item.name}
+                  className={cn(
+                    "px-6 py-4 flex items-center justify-between hover:bg-accent/50 transition-colors border-b border-border",
+                    index % 2 === 0 && "sm:border-r",
                   )}
-                  Recompute
-                </Button>
-              </dd>
-            </div>
-          </div>
-          <div className="mt-8">
-            <h3 className="text-lg font-medium leading-6 text-foreground mb-4">
-              Database Statistics
-            </h3>
-            <div className="overflow-hidden rounded-lg bg-muted/50 shadow border border-border">
-              <ul className="grid grid-cols-1 sm:grid-cols-2">
-                {stats.map((item, index) => (
-                  <li
-                    key={item.name}
-                    className={cn(
-                      "px-6 py-4 flex items-center justify-between hover:bg-accent/50 transition-colors border-b border-border",
-                      index % 2 === 0 && "sm:border-r",
-                    )}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        {item.name}
-                      </span>
-                      <span className="text-2xl font-semibold text-foreground">
-                        {item.value}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={loadingField !== null}
-                      onClick={() => recreateStat(item.field)}
-                      className="gap-2"
-                    >
-                      {loadingField === item.field ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
+                >
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {item.name}
+                    </span>
+                    <span className="text-2xl font-semibold text-foreground flex items-baseline gap-2">
+                      {item.value}
+                      {"size" in item && item.size !== undefined && (
+                        <span className="text-sm font-normal text-muted-foreground">
+                          |{" "}
+                          {new Intl.NumberFormat("en", {
+                            notation: "compact",
+                            style: "unit",
+                            unit: "byte",
+                            unitDisplay: "narrow",
+                          }).format(item.size)}
+                        </span>
                       )}
-                      <span className="hidden sm:inline">Recreate</span>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={loadingField !== null}
+                    onClick={() =>
+                      item.field === "bucket"
+                        ? recreateBucket()
+                        : recreateStat(item.field)
+                    }
+                    className="gap-2"
+                  >
+                    {loadingField === item.field ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">
+                      {item.field === "bucket" ? "Recompute" : "Recreate"}
+                    </span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-    </main>
-  );
+    );
 }

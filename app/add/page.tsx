@@ -15,22 +15,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import {
-  Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../context/AuthContext";
@@ -39,7 +29,7 @@ import readExif from "@/app/helpers/exif";
 import { PhotoType } from "@/app/helpers/models";
 import { photoCollection } from "@/app/helpers/collections";
 import { doc, setDoc } from "firebase/firestore";
-import { Rocket } from "lucide-react";
+import { Rocket, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -64,10 +54,9 @@ interface UploadingFile {
 
 export default function AddPage() {
   const [files, setFiles] = useState<UploadingFile[]>([]);
-  const [tagSearch, setTagSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const { user, loading: loadingAuth } = useAuth();
-  const { values, setValues } = useCounters();
+  const { values } = useCounters();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit/Publish state
@@ -201,7 +190,7 @@ export default function AddPage() {
       // 2. Map user to nick
       const nick = CONFIG.familyMap.get(user.email) || user.email.split("@")[0];
 
-      // 3. Prepare initial PhotoType
+      // 3. Prepare initial PhotoType (Applying defaults back here as per request)
       const photoData: PhotoType = {
         ...(exif || { model: "UNKNOWN", date: formatDatum(new Date()) }),
         filename: uploadingFile.storageName || uploadingFile.file.name,
@@ -209,8 +198,8 @@ export default function AddPage() {
         size: uploadingFile.file.size,
         email: user.email,
         nick: nick,
-        headline: values.headlineToApply,
-        tags: values.tagsToApply,
+        headline: values.headlineToApply || CONFIG.noTitle,
+        tags: values.tagsToApply || [],
       };
 
       // 4. Open editor instead of immediate publish
@@ -309,7 +298,7 @@ export default function AddPage() {
 
   if (loadingAuth) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="h-full flex items-center justify-center pt-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -317,7 +306,7 @@ export default function AddPage() {
 
   if (!user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-4">
+      <div className="h-full flex flex-col items-center justify-center p-4 pt-20">
         <div className="p-8 rounded-xl bg-card shadow-2xl border border-border text-center space-y-6 max-w-sm w-full animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 mx-auto bg-destructive/10 rounded-xl flex items-center justify-center">
             <Lock className="w-10 h-10 text-destructive" />
@@ -345,7 +334,7 @@ export default function AddPage() {
   const totalPending = files.filter((f) => f.status === "pending").length;
 
   return (
-    <div className="mx-auto space-y-8 pb-20">
+    <div className="mx-auto space-y-8 pb-20 pt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* Dropzone Area */}
       <div
         onDragOver={handleDragOver}
@@ -360,7 +349,6 @@ export default function AddPage() {
           "backdrop-blur-xl shadow-xl hover:shadow-2xl",
         )}
       >
-        {/* TODO maxFiles, maxSize */}
         <Input
           type="file"
           multiple
@@ -382,93 +370,10 @@ export default function AddPage() {
         </div>
       </div>
 
-      {/* Configuration Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 p-5 rounded-xl bg-card border border-border shadow-sm">
-        <div className="flex-1 space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Default Headline
-          </label>
-          <div className="relative">
-            <Input
-              placeholder="Headline to apply to all photos..."
-              value={values.headlineToApply}
-              onChange={(e) =>
-                setValues((prev) => ({
-                  ...prev,
-                  headlineToApply: e.target.value,
-                }))
-              }
-              className="rounded-xl border-border pr-10"
-            />
-            {values.headlineToApply && (
-              <button
-                onClick={() =>
-                  setValues((prev) => ({ ...prev, headlineToApply: "" }))
-                }
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-md transition-colors"
-                title="Clear headline"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="flex-1 space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Default Tags
-          </label>
-          <div className="relative">
-            <Combobox
-              value={values.tagsToApply || []}
-              onValueChange={(val) =>
-                setValues((prev) => ({ ...prev, tagsToApply: val }))
-              }
-              onInputValueChange={(val) => setTagSearch(val)}
-              multiple
-            >
-              <ComboboxChips>
-                {(values.tagsToApply || []).map((tag) => (
-                  <ComboboxChip key={tag}>{tag}</ComboboxChip>
-                ))}
-                <ComboboxChipsInput placeholder="Select tags to apply..." />
-              </ComboboxChips>
-              <ComboboxContent>
-                <ComboboxList>
-                  <ComboboxEmpty>No tags found.</ComboboxEmpty>
-                  {Object.keys(values.values.tags || {}).map((t) => (
-                    <ComboboxItem key={t} value={t}>
-                      {t}
-                    </ComboboxItem>
-                  ))}
-                  {tagSearch &&
-                    !Object.keys(values.values.tags || {}).some(
-                      (t) => t.toLowerCase() === tagSearch.toLowerCase(),
-                    ) && (
-                      <ComboboxItem value={tagSearch}>
-                        Create &quot;{tagSearch}&quot;
-                      </ComboboxItem>
-                    )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-            {values.tagsToApply && values.tagsToApply.length > 0 && (
-              <button
-                onClick={() =>
-                  setValues((prev) => ({ ...prev, tagsToApply: [] }))
-                }
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-md transition-colors z-10"
-                title="Clear tags"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Action Bar */}
       {files.length > 0 && (
-        <div className="sticky top-4 flex items-center justify-between p-5 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="sticky top-20 flex items-center justify-between p-5 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 z-40">
           <div className="flex items-center gap-6">
             <div className="flex flex-col">
               <span className="text-sm font-bold text-foreground">
@@ -554,7 +459,6 @@ export default function AddPage() {
               )}
             </div>
 
-            {/* Top Right Controls */}
             <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
               {file.status === "completed" && !file.published && (
                 <button

@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLayout } from "../_components/AppLayout";
 
 export default function SettingsLayout({
   children,
@@ -37,10 +37,10 @@ export default function SettingsLayout({
             <Lock className="w-10 h-10 text-destructive" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-foreground">
               Access Denied
             </h2>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Only administrators can access this page.
             </p>
           </div>
@@ -52,23 +52,5 @@ export default function SettingsLayout({
     );
   }
 
-  return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* Toolbar */}
-      <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 shadow-sm sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <h2 className="text-xl font-bold text-foreground hover:text-primary transition-colors">
-              Administration
-            </h2>
-          </Link>
-        </div>
-      </header>
-
-      {/* Main Area */}
-      <main className="flex-1 overflow-auto bg-background p-4 md:p-6">
-        <div className="mx-auto max-w-7xl">{children}</div>
-      </main>
-    </div>
-  );
+  return <AppLayout>{children}</AppLayout>;
 }

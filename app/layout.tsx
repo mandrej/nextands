@@ -24,6 +24,7 @@ import { ThemeProvider } from "../components/ThemeProvider";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "../components/ToasterProvider";
 import { CONFIG } from "./helpers";
+import { Menu } from "./_components/Menu";
 
 export default function RootLayout({
   children,
@@ -41,7 +42,10 @@ export default function RootLayout({
             <FilterProvider>
               <SelectionProvider>
                 <Toaster />
-                <CountersProvider>{children}</CountersProvider>
+                <CountersProvider>
+                  <Menu />
+                  {children}
+                </CountersProvider>
               </SelectionProvider>
             </FilterProvider>
           </AuthProvider>

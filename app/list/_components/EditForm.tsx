@@ -125,6 +125,8 @@ export function EditForm({ photo, onSave }: EditFormProps) {
   }, [values.values.lens]);
 
   const [tagSearch, setTagSearch] = useState("");
+  const [modelSearch, setModelSearch] = useState("");
+  const [lensSearch, setLensSearch] = useState("");
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -221,6 +223,7 @@ export function EditForm({ photo, onSave }: EditFormProps) {
             <Combobox
               value={formData.model}
               onValueChange={(val) => handleChange("model", val || "")}
+              onInputValueChange={(val) => setModelSearch(val)}
             >
               <ComboboxInput placeholder="Select Camera Model" />
               <ComboboxContent>
@@ -231,6 +234,15 @@ export function EditForm({ photo, onSave }: EditFormProps) {
                       {opt.label}
                     </ComboboxItem>
                   ))}
+                  {modelSearch &&
+                    !modelOptions.some(
+                      (opt) =>
+                        opt.value.toLowerCase() === modelSearch.toLowerCase(),
+                    ) && (
+                      <ComboboxItem value={modelSearch}>
+                        Create &quot;{modelSearch}&quot;
+                      </ComboboxItem>
+                    )}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>
@@ -240,6 +252,7 @@ export function EditForm({ photo, onSave }: EditFormProps) {
             <Combobox
               value={formData.lens}
               onValueChange={(val) => handleChange("lens", val || "")}
+              onInputValueChange={(val) => setLensSearch(val)}
             >
               <ComboboxInput placeholder="Select Lens" />
               <ComboboxContent>
@@ -250,6 +263,15 @@ export function EditForm({ photo, onSave }: EditFormProps) {
                       {opt.label}
                     </ComboboxItem>
                   ))}
+                  {lensSearch &&
+                    !lensOptions.some(
+                      (opt) =>
+                        opt.value.toLowerCase() === lensSearch.toLowerCase(),
+                    ) && (
+                      <ComboboxItem value={lensSearch}>
+                        Create &quot;{lensSearch}&quot;
+                      </ComboboxItem>
+                    )}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>

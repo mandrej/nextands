@@ -124,6 +124,8 @@ export function EditForm({ photo, onSave }: EditFormProps) {
     return Object.keys(values.values.lens).map((l) => ({ value: l, label: l }));
   }, [values.values.lens]);
 
+  const [tagSearch, setTagSearch] = useState("");
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
@@ -149,6 +151,7 @@ export function EditForm({ photo, onSave }: EditFormProps) {
             <Combobox
               value={formData.tags || []}
               onValueChange={(val) => handleChange("tags", val)}
+              onInputValueChange={(val) => setTagSearch(val)}
               multiple
             >
               <ComboboxChips>
@@ -165,6 +168,15 @@ export function EditForm({ photo, onSave }: EditFormProps) {
                       {opt.label}
                     </ComboboxItem>
                   ))}
+                  {tagSearch &&
+                    !tagOptions.some(
+                      (opt) =>
+                        opt.value.toLowerCase() === tagSearch.toLowerCase(),
+                    ) && (
+                      <ComboboxItem value={tagSearch}>
+                        Create &quot;{tagSearch}&quot;
+                      </ComboboxItem>
+                    )}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>

@@ -64,6 +64,7 @@ interface UploadingFile {
 
 export default function AddPage() {
   const [files, setFiles] = useState<UploadingFile[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const { user, loading: loadingAuth } = useAuth();
   const { values, setValues } = useCounters();
@@ -422,6 +423,7 @@ export default function AddPage() {
               onValueChange={(val) =>
                 setValues((prev) => ({ ...prev, tagsToApply: val }))
               }
+              onInputValueChange={(val) => setTagSearch(val)}
               multiple
             >
               <ComboboxChips>
@@ -438,6 +440,14 @@ export default function AddPage() {
                       {t}
                     </ComboboxItem>
                   ))}
+                  {tagSearch &&
+                    !Object.keys(values.values.tags || {}).some(
+                      (t) => t.toLowerCase() === tagSearch.toLowerCase(),
+                    ) && (
+                      <ComboboxItem value={tagSearch}>
+                        Create &quot;{tagSearch}&quot;
+                      </ComboboxItem>
+                    )}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>

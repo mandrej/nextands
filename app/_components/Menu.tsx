@@ -9,20 +9,24 @@ export function Menu() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  // Define nav items, filtering out those that the user requested to remove from the "top" 
-  // if they were on the gallery, but for internal pages they are essential.
-  // Filter based on previous user request "remove navigation for Home, List, Admin from top"
-  // Interpret as "remove them from the Gallery page (list) top"
   const isGallery = pathname === "/list";
 
   const navItems = [
     ...(isGallery ? [] : [{ href: "/", label: "Home" }]),
     ...(isGallery ? [] : [{ href: "/list", label: "List" }]),
     ...(user?.isAuthorized ? [{ href: "/add", label: "Add" }] : []),
-    ...(user?.isAdmin && !isGallery ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(user?.isAdmin && !isGallery
+      ? [{ href: "/admin", label: "Admin" }]
+      : []),
   ];
 
-  if (pathname === "/" || pathname.startsWith("/add") || pathname.startsWith("/admin") || navItems.length === 0) return null;
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/add") ||
+    pathname.startsWith("/admin") ||
+    navItems.length === 0
+  )
+    return null;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">

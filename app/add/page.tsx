@@ -334,7 +334,7 @@ export default function AddPage() {
   const totalPending = files.filter((f) => f.status === "pending").length;
 
   return (
-    <div className="mx-auto space-y-8 pb-20 pt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="w-full space-y-8 pb-20">
       {/* Dropzone Area */}
       <div
         onDragOver={handleDragOver}
@@ -342,7 +342,7 @@ export default function AddPage() {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "relative group cursor-pointer rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out p-6 text-center",
+          "relative group cursor-pointer rounded-lg border-2 border-dashed transition-all duration-500 ease-in-out p-6 text-center",
           isDragging
             ? "border-primary bg-primary/5 scale-[0.99]"
             : "border-border hover:border-muted-foreground/50 bg-card",
@@ -373,7 +373,7 @@ export default function AddPage() {
 
       {/* Action Bar */}
       {files.length > 0 && (
-        <div className="sticky top-20 flex items-center justify-between p-5 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 z-40">
+        <div className="sticky top-20 flex items-center justify-between p-5 rounded-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 z-40">
           <div className="flex items-center gap-6">
             <div className="flex flex-col">
               <span className="text-sm font-bold text-foreground">
@@ -424,11 +424,11 @@ export default function AddPage() {
       )}
 
       {/* Files List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center">
         {files.map((file) => (
           <div
             key={file.id}
-            className="group relative aspect-square rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 animate-in fade-in zoom-in-50"
+            className="group relative w-full max-w-[400px] aspect-square rounded-lg bg-card border border-border overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 animate-in fade-in zoom-in-50"
           >
             <Image
               src={file.preview}
@@ -486,7 +486,7 @@ export default function AddPage() {
             )}
 
             {/* Bottom Info Bar */}
-            <div className="absolute bottom-0 inset-x-0 p-3 bg-linear-to-t from-black/90 via-black/60 to-transparent text-white pt-8">
+            <div className="absolute bottom-0 inset-x-0 p-4 bg-linear-to-t from-black/70 to-transparent text-white z-1 pt-8">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <p className="text-sm font-medium truncate flex-1">
                   {file.file.name}

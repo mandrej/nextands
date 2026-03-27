@@ -25,6 +25,7 @@ Emulator ports:
 - Auth: 9099
 - Firestore: 8080
 - Storage: 9199
+- Hosting: 5000
 - UI: Auto-assigned (check terminal output)
 
 ## Project Architecture

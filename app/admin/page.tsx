@@ -152,66 +152,66 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full space-y-8 pb-20">
-        <div className="bg-card p-6 shadow rounded-lg border border-border">
-          <h3 className="pb-4 text-lg font-medium leading-6 text-foreground flex items-center gap-2">
-            <Database className="h-5 w-5 text-muted-foreground" />
-            System metadata and resource counts.
-          </h3>
-          <div className="overflow-hidden rounded-lg bg-muted/50 shadow border border-border">
-            <ul className="grid grid-cols-1 sm:grid-cols-2">
-              {stats.map((item, index) => (
-                <li
-                  key={item.name}
-                  className={cn(
-                    "px-6 py-4 flex items-center justify-between hover:bg-accent/50 transition-colors border-b border-border",
-                    index % 2 === 0 && "sm:border-r",
-                  )}
-                >
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {item.name}
-                    </span>
-                    <span className="text-2xl font-semibold text-foreground flex items-baseline gap-2">
-                      {item.value}
-                      {"size" in item && item.size !== undefined && (
-                        <span className="text-sm font-normal text-muted-foreground">
-                          |{" "}
-                          {new Intl.NumberFormat("en", {
-                            notation: "compact",
-                            style: "unit",
-                            unit: "byte",
-                            unitDisplay: "narrow",
-                          }).format(item.size)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={loadingField !== null}
-                    onClick={() =>
-                      item.field === "bucket"
-                        ? recreateBucket()
-                        : recreateStat(item.field)
-                    }
-                    className="gap-2"
-                  >
-                    {loadingField === item.field ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4" />
+    <div className="w-full space-y-6 pb-20">
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <Database className="h-5 w-5 text-primary" />
+          System Metadata
+        </h3>
+        <div className="overflow-hidden rounded-xl bg-card border border-border shadow-sm">
+          <ul className="grid grid-cols-1 sm:grid-cols-2">
+            {stats.map((item, index) => (
+              <li
+                key={item.name}
+                className={cn(
+                  "px-6 py-4 flex items-center justify-between hover:bg-accent/50 transition-colors border-b border-border",
+                  index % 2 === 0 && "sm:border-r",
+                )}
+              >
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {item.name}
+                  </span>
+                  <span className="text-2xl font-semibold text-foreground flex items-baseline gap-2">
+                    {item.value}
+                    {"size" in item && item.size !== undefined && (
+                      <span className="text-sm font-normal text-muted-foreground">
+                        |{" "}
+                        {new Intl.NumberFormat("en", {
+                          notation: "compact",
+                          style: "unit",
+                          unit: "byte",
+                          unitDisplay: "narrow",
+                        }).format(item.size)}
+                      </span>
                     )}
-                    <span className="hidden sm:inline">
-                      {item.field === "bucket" ? "Recompute" : "Recreate"}
-                    </span>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </div>
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={loadingField !== null}
+                  onClick={() =>
+                    item.field === "bucket"
+                      ? recreateBucket()
+                      : recreateStat(item.field)
+                  }
+                  className="gap-2"
+                >
+                  {loadingField === item.field ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {item.field === "bucket" ? "Calculate" : "Recreate"}
+                  </span>
+                </Button>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-    );
+    </div>
+  );
 }

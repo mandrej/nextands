@@ -9,13 +9,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
-import {
-  Upload,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -370,7 +364,6 @@ export default function AddPage() {
         </div>
       </div>
 
-
       {/* Action Bar */}
       {files.length > 0 && (
         <div className="sticky top-20 flex items-center justify-between p-5 rounded-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 z-40">
@@ -451,7 +444,7 @@ export default function AddPage() {
               {file.status !== "uploading" && (
                 <button
                   onClick={() => removeFile(file.id)}
-                  className="p-1.5 bg-black/50 hover:bg-red-500 text-white rounded backdrop-blur-md transition-all shadow-lg"
+                  className="p-1.5 bg-black/50 hover:bg-red-500 text-white rounded-full backdrop-blur-md transition-all shadow-lg"
                   title="Remove file"
                 >
                   <X className="w-4 h-4" />
@@ -463,7 +456,7 @@ export default function AddPage() {
               {file.status === "completed" && !file.published && (
                 <button
                   onClick={() => handlePublishClick(file)}
-                  className="p-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded backdrop-blur-md transition-all shadow-lg"
+                  className="p-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full backdrop-blur-md transition-all shadow-lg"
                   title="Publish to gallery"
                 >
                   <Rocket className="w-4 h-4" />

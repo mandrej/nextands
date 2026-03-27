@@ -14,7 +14,16 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { useCounters } from "../context/CountersContext";
 import { useFilter } from "../context/FilterContext";
 import { useSelection } from "../context/SelectionContext";
-import { Trash2, Eraser, Loader2, Home } from "lucide-react";
+import {
+  Trash2,
+  Eraser,
+  Loader2,
+  Home,
+  Database,
+  Tag,
+  Users,
+  MessageSquare,
+} from "lucide-react";
 import { doc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
 import { storage } from "../firebase";
 import { ref, deleteObject } from "firebase/storage";
@@ -44,11 +53,7 @@ import {
 } from "@/components/ui/combobox";
 import { usePathname } from "next/navigation";
 
-export function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const { values, setValues, updateCounter } = useCounters();
@@ -62,6 +67,7 @@ export function AppLayout({
   const pathname = usePathname();
   const isListPage = pathname === "/list";
   const isAddPage = pathname === "/add";
+  const isAdminPage = pathname?.startsWith("/admin");
 
   const tagOptions = useMemo(() => {
     const existingTags = new Set([
@@ -314,115 +320,127 @@ export function AppLayout({
                   </label>
                   <div className="relative">
                     <Input
-                      placeholder={isAddPage ? "Headline to apply to all photos..." : "to all selected..."}
+                      placeholder={
+                        isAddPage
+                          ? "Headline to apply to all photos..."
+                          : "to all selected..."
+                      }
                       value={values.headlineToApply}
-                  onChange={(e) =>
-                    setValues((prev) => ({
-                      ...prev,
-                      headlineToApply: e.target.value,
-                    }))
-                  }
-                  className="h-9 text-sm rounded-lg"
-                />
-                {values.headlineToApply && (
-                  <button
-                    onClick={() =>
-                      setValues((prev) => ({ ...prev, headlineToApply: "" }))
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-md transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-              {isListPage && selectedIds.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="xs"
-                  className="w-full h-8 text-[10px] font-bold uppercase tracking-tight"
-                  onClick={handleApplyHeadline}
-                  disabled={isApplyingHeadline || !values.headlineToApply}
-                >
-                  {isApplyingHeadline ? (
-                    <Loader2 className="size-3 animate-spin mr-1" />
-                  ) : null}
-                  Apply to {selectedIds.length} selected
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
-                {isAddPage ? "Default Tags" : "Merge Tags"}
-              </label>
-              <div className="relative">
-                <Combobox
-                  value={values.tagsToApply || []}
-                  onValueChange={(val) =>
-                    setValues((prev) => ({ ...prev, tagsToApply: val }))
-                  }
-                  onInputValueChange={(val) => setTagSearch(val)}
-                  multiple
-                >
-                  <ComboboxChips className="min-h-9 py-1 px-2 rounded-lg border-border bg-transparent shadow-none">
-                    {(values.tagsToApply || []).map((tag) => (
-                      <ComboboxChip key={tag} className="h-6 text-[10px]">
-                        {tag}
-                      </ComboboxChip>
-                    ))}
-                    <ComboboxChipsInput
-                      placeholder={isAddPage ? "Select tags to apply..." : "to apply..."}
-                      className="text-sm h-7"
+                      onChange={(e) =>
+                        setValues((prev) => ({
+                          ...prev,
+                          headlineToApply: e.target.value,
+                        }))
+                      }
+                      className="h-9 text-sm rounded-lg"
                     />
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxList>
-                      <ComboboxEmpty>No tags found.</ComboboxEmpty>
-                      {tagOptions.map((t: string) => (
-                        <ComboboxItem key={t} value={t}>
-                          {t}
-                        </ComboboxItem>
-                      ))}
-                      {tagSearch &&
-                        !tagOptions.some(
-                          (t: string) => t.toLowerCase() === tagSearch.toLowerCase(),
-                        ) && (
-                          <ComboboxItem value={tagSearch}>
-                            Create &quot;{tagSearch}&quot;
-                          </ComboboxItem>
-                        )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-                {values.tagsToApply && values.tagsToApply.length > 0 && (
-                  <button
-                    onClick={() =>
-                      setValues((prev) => ({ ...prev, tagsToApply: [] }))
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-md transition-colors z-10"
-                  >
-                    <X className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-              {isListPage && selectedIds.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="xs"
-                  className="w-full h-8 text-[10px] font-bold uppercase tracking-tight"
-                  onClick={handleApplyTags}
-                  disabled={isApplyingTags}
-                >
-                  {isApplyingTags ? (
-                    <Loader2 className="size-3 animate-spin mr-1" />
-                  ) : null}
-                  Apply to {selectedIds.length} selected
-                </Button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+                    {values.headlineToApply && (
+                      <button
+                        onClick={() =>
+                          setValues((prev) => ({
+                            ...prev,
+                            headlineToApply: "",
+                          }))
+                        }
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-md transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                  {isListPage && selectedIds.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      className="w-full h-8 text-[10px] font-bold uppercase tracking-tight"
+                      onClick={handleApplyHeadline}
+                      disabled={isApplyingHeadline || !values.headlineToApply}
+                    >
+                      {isApplyingHeadline ? (
+                        <Loader2 className="size-3 animate-spin mr-1" />
+                      ) : null}
+                      Apply to {selectedIds.length} selected
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
+                    {isAddPage ? "Default Tags" : "Merge Tags"}
+                  </label>
+                  <div className="relative">
+                    <Combobox
+                      value={values.tagsToApply || []}
+                      onValueChange={(val) =>
+                        setValues((prev) => ({ ...prev, tagsToApply: val }))
+                      }
+                      onInputValueChange={(val) => setTagSearch(val)}
+                      multiple
+                    >
+                      <ComboboxChips className="min-h-9 py-1 px-2 rounded-lg border-border bg-transparent shadow-none">
+                        {(values.tagsToApply || []).map((tag) => (
+                          <ComboboxChip key={tag} className="h-6 text-[10px]">
+                            {tag}
+                          </ComboboxChip>
+                        ))}
+                        <ComboboxChipsInput
+                          placeholder={
+                            isAddPage
+                              ? "Select tags to apply..."
+                              : "to apply..."
+                          }
+                          className="text-sm h-7"
+                        />
+                      </ComboboxChips>
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>No tags found.</ComboboxEmpty>
+                          {tagOptions.map((t: string) => (
+                            <ComboboxItem key={t} value={t}>
+                              {t}
+                            </ComboboxItem>
+                          ))}
+                          {tagSearch &&
+                            !tagOptions.some(
+                              (t: string) =>
+                                t.toLowerCase() === tagSearch.toLowerCase(),
+                            ) && (
+                              <ComboboxItem value={tagSearch}>
+                                Create &quot;{tagSearch}&quot;
+                              </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                    {values.tagsToApply && values.tagsToApply.length > 0 && (
+                      <button
+                        onClick={() =>
+                          setValues((prev) => ({ ...prev, tagsToApply: [] }))
+                        }
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-md transition-colors z-10"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                  {isListPage && selectedIds.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      className="w-full h-8 text-[10px] font-bold uppercase tracking-tight"
+                      onClick={handleApplyTags}
+                      disabled={isApplyingTags}
+                    >
+                      {isApplyingTags ? (
+                        <Loader2 className="size-3 animate-spin mr-1" />
+                      ) : null}
+                      Apply to {selectedIds.length} selected
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="px-6 py-4 border-t border-border text-xs text-right text-muted-foreground">
             Build {version()}
@@ -455,9 +473,48 @@ export function AppLayout({
               </Link>
             )}
 
-            <div className={cn("flex-1 max-w-sm", user ? "ml-4" : "mx-auto")}>
-              <GlobalSearch />
-            </div>
+            {!isAdminPage ? (
+              <div className={cn("flex-1 max-w-sm", user ? "ml-4" : "mx-auto")}>
+                <GlobalSearch />
+              </div>
+            ) : (
+              <nav className="flex items-center bg-muted/50 p-1 rounded-xl gap-1">
+                {[
+                  { label: "Repair", icon: Database, href: "/admin" },
+                  { label: "Tags", icon: Tag, href: "/admin/tags" },
+                  { label: "Users", icon: Users, href: "/admin/users" },
+                  {
+                    label: "Messages",
+                    icon: MessageSquare,
+                    href: "/admin/messages",
+                  },
+                ].map((tab) => {
+                  const isActive = pathname === tab.href;
+                  return (
+                    <Link key={tab.label} href={tab.href}>
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        size="sm"
+                        className={cn(
+                          "h-9 px-4 gap-2 font-medium transition-all duration-200",
+                          isActive
+                            ? "text-primary shadow-sm bg-background"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <tab.icon
+                          className={cn(
+                            "size-4",
+                            isActive ? "text-primary" : "text-muted-foreground",
+                          )}
+                        />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
           </div>
         </header>
 

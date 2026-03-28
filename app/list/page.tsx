@@ -123,7 +123,7 @@ const PhotoCard = memo(
           <p className="text-sm font-semibold truncate">
             {photo.headline || photo.filename}
           </p>
-          <p className="text-xs opacity-75">
+          <p className="text-xs">
             {photo.date
               ? new Date(photo.date)
                   .toLocaleString(undefined, {
@@ -135,6 +135,7 @@ const PhotoCard = memo(
                   })
                   .replace(/\//g, ".")
               : ""}
+            {photo.nick && <span className="text-xs"> · @{photo.nick}</span>}
           </p>
         </div>
       </li>

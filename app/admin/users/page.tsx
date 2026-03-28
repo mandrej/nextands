@@ -12,10 +12,9 @@ import {
   Mail,
   ShieldCheck,
   ShieldX,
-  UserCheck,
-  UserPlus,
+  BellRing,
+  BellOff,
   Loader2,
-  BadgeCheck,
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +35,7 @@ export default function UsersPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [editingUser, setEditingUser] = useState<MyUserType | null>(null);
   const [editData, setEditData] = useState({ name: "", nick: "" });
+  const [nickError, setNickError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -80,6 +80,7 @@ export default function UsersPage() {
         prev.map((u) => (u.uid === user.uid ? { ...u, [field]: newVal } : u)),
       );
       toast.success(`${user.email} updated`);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error(`Failed to update ${field}`);
     } finally {
@@ -89,16 +90,33 @@ export default function UsersPage() {
 
   const handleUpdateInfo = async () => {
     if (!editingUser) return;
+
+    const trimmedNick = editData.nick.trim();
+    if (trimmedNick) {
+      const conflict = users.find(
+        (u) =>
+          u.uid !== editingUser.uid &&
+          (u.nick || "").toLowerCase() === trimmedNick.toLowerCase(),
+      );
+      if (conflict) {
+        setNickError(
+          `"@${trimmedNick}" is already taken by ${conflict.name || conflict.email}`,
+        );
+        return;
+      }
+    }
+    setNickError(null);
+
     setIsUpdating(true);
     try {
-      await updateDoc(doc(userCollection, editingUser.uid), editData);
+      const payload = { ...editData, nick: trimmedNick };
+      await updateDoc(doc(userCollection, editingUser.uid), payload);
       setUsers((prev) =>
-        prev.map((u) =>
-          u.uid === editingUser.uid ? { ...u, ...editData } : u,
-        ),
+        prev.map((u) => (u.uid === editingUser.uid ? { ...u, ...payload } : u)),
       );
       toast.success("User profile updated");
       setEditingUser(null);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Failed to update profile");
     } finally {
@@ -157,19 +175,6 @@ export default function UsersPage() {
                       <span className="font-semibold text-foreground tracking-tight">
                         {user.name || "System User"}
                       </span>
-                      {user.isAdmin && (
-                        <BadgeCheck className="size-4 text-primary" />
-                      )}
-                      <div
-                        className={cn(
-                          "text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest",
-                          user.isAuthorized
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-red-500/10 text-red-500",
-                        )}
-                      >
-                        {user.isAuthorized ? "Verified" : "Restricted"}
-                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -180,10 +185,6 @@ export default function UsersPage() {
                           @{user.nick}
                         </span>
                       )}
-                      <span className="hidden sm:inline opacity-30">|</span>
-                      <span className="opacity-40 text-[9px] font-mono">
-                        {user.uid.substring(0, 12)}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -215,21 +216,21 @@ export default function UsersPage() {
                     className={cn(
                       "h-8 gap-2 text-[11px] font-bold uppercase tracking-tight rounded-md transition-all",
                       user.isAuthorized
-                        ? "text-green-500 hover:text-green-600 hover:bg-green-500/10"
-                        : "text-red-500 hover:text-red-600 hover:bg-red-500/10",
+                        ? "text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                        : "text-green-500 hover:text-green-600 hover:bg-green-500/10",
                     )}
                     onClick={() => toggleStatus(user, "isAuthorized")}
                     disabled={isUpdating}
                   >
                     {user.isAuthorized ? (
-                      <UserCheck className="size-3.5" />
+                      <BellOff className="size-3.5" />
                     ) : (
-                      <UserPlus className="size-3.5" />
+                      <BellRing className="size-3.5" />
                     )}
                     {user.isAuthorized ? "Block" : "Allow"}
                   </Button>
 
-                  <div className="w-[1px] h-4 bg-border mx-1" />
+                  <div className="w-px h-4 bg-border mx-1" />
 
                   <Button
                     variant="ghost"
@@ -241,6 +242,7 @@ export default function UsersPage() {
                         name: user.name || "",
                         nick: user.nick || "",
                       });
+                      setNickError(null);
                     }}
                     disabled={isUpdating}
                   >
@@ -294,13 +296,20 @@ export default function UsersPage() {
               </label>
               <Input
                 value={editData.nick}
-                onChange={(e) =>
-                  setEditData((prev) => ({ ...prev, nick: e.target.value }))
-                }
+                onChange={(e) => {
+                  setEditData((prev) => ({ ...prev, nick: e.target.value }));
+                  setNickError(null);
+                }}
                 placeholder="Nick..."
-                className="bg-muted/30 focus-visible:ring-primary font-mono"
+                className={cn(
+                  "bg-muted/30 focus-visible:ring-primary font-mono",
+                  nickError && "border-red-500 focus-visible:ring-red-500",
+                )}
                 disabled={isUpdating}
               />
+              {nickError && (
+                <p className="text-xs text-red-500 ml-1 mt-1">{nickError}</p>
+              )}
             </div>
             {editingUser && (
               <div className="bg-muted/50 p-3 rounded-lg flex items-center gap-3">

@@ -16,18 +16,48 @@ import {
   bucketCollection,
 } from "../helpers/collections";
 import { PhotoType, BucketType } from "../helpers/models";
-import { db } from "../firebase";
-import { counterId } from "../helpers/index";
+import { db, storage } from "../firebase";
+import { counterId, thumbName } from "../helpers/index";
 import { toast } from "sonner";
-import { RefreshCw, Loader2, Database } from "lucide-react";
+import {
+  RefreshCw,
+  Loader2,
+  Database,
+  HardDrive,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { setDoc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { ref, listAll, deleteObject } from "firebase/storage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface OrphanFile {
+  name: string;
+  fullPath: string;
+}
 
 export default function SettingsPage() {
   const { counts, refreshCounters } = useCounters();
   const [loadingField, setLoadingField] = useState<string | null>(null);
   const [bucket, setBucket] = useState<BucketType | null>(null);
+
+  // Orphan detection state
+  const [orphans, setOrphans] = useState<OrphanFile[]>([]);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [scanned, setScanned] = useState(false);
 
   const fetchBucket = useCallback(async () => {
     try {
@@ -43,6 +73,82 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchBucket();
   }, [fetchBucket]);
+
+  const scanOrphans = useCallback(async () => {
+    setScanLoading(true);
+    setScanned(false);
+    try {
+      // 1. List all files in storage root
+      const storageRef = ref(storage);
+      const listResult = await listAll(storageRef);
+
+      // 2. Get all Photo doc IDs from Firestore
+      const photoSnap = await getDocs(photoCollection);
+      const photoIds = new Set(photoSnap.docs.map((d) => d.id));
+
+      // 3. Find storage items with no matching Firestore doc
+      //    Thumbnails live in a "thumbnails/" subfolder so listAll on root only returns originals
+      const found: OrphanFile[] = [];
+      for (const item of listResult.items) {
+        const name = item.name;
+        if (!photoIds.has(name)) {
+          found.push({ name, fullPath: item.fullPath });
+        }
+      }
+
+      setOrphans(found);
+      setScanned(true);
+      if (found.length === 0) {
+        toast.success("No orphaned files found — storage is clean!");
+      } else {
+        toast.warning(
+          `Found ${found.length} orphaned file${found.length > 1 ? "s" : ""} in storage`,
+        );
+      }
+    } catch (error) {
+      console.error("Error scanning storage:", error);
+      toast.error("Failed to scan storage", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setScanLoading(false);
+    }
+  }, []);
+
+  const deleteOrphans = async () => {
+    setDeleteLoading(true);
+    let deleted = 0;
+    try {
+      for (const orphan of orphans) {
+        // Delete the original file
+        await deleteObject(ref(storage, orphan.fullPath));
+        deleted++;
+
+        // Also delete the thumbnail if it exists
+        const thumbPath = thumbName(orphan.name);
+        if (thumbPath) {
+          try {
+            await deleteObject(ref(storage, thumbPath));
+          } catch {
+            // Thumbnail may not exist — ignore
+          }
+        }
+      }
+      setOrphans([]);
+      setScanned(false);
+      toast.success(
+        `Deleted ${deleted} orphaned file${deleted > 1 ? "s" : ""} from storage`,
+      );
+    } catch (error) {
+      console.error("Error deleting orphans:", error);
+      toast.error("Failed to delete orphaned files", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setDeleteLoading(false);
+      setConfirmOpen(false);
+    }
+  };
 
   const stats = [
     {
@@ -152,7 +258,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full space-y-6 pb-20">
+    <div className="w-full space-y-8 pb-20">
+      {/* System Metadata */}
       <div className="space-y-4">
         <h3 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Database className="h-5 w-5 text-primary" />
@@ -175,7 +282,7 @@ export default function SettingsPage() {
                   <span className="text-2xl font-semibold text-foreground flex items-baseline gap-2">
                     {item.value}
                     {"size" in item && item.size !== undefined && (
-                      <span className="text-sm font-normal text-muted-foreground">
+                      <span className="text-xl font-normal text-muted-foreground">
                         |{" "}
                         {new Intl.NumberFormat("en", {
                           notation: "compact",
@@ -212,6 +319,136 @@ export default function SettingsPage() {
           </ul>
         </div>
       </div>
+
+      {/* Storage Cleanup */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <HardDrive className="h-5 w-5 text-primary" />
+            Storage Cleanup
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scanOrphans}
+            disabled={scanLoading || deleteLoading}
+            className="gap-2"
+          >
+            {scanLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Scan for Orphans
+          </Button>
+        </div>
+
+        <div className="overflow-hidden rounded-xl bg-card border border-border shadow-sm">
+          {!scanned && !scanLoading && (
+            <div className="px-6 py-10 flex flex-col items-center justify-center text-center gap-3">
+              <HardDrive className="h-10 w-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Scan storage to find files that have no matching record in the
+                Photo collection.
+              </p>
+            </div>
+          )}
+
+          {scanLoading && (
+            <div className="px-6 py-10 flex flex-col items-center justify-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Scanning storage…</p>
+            </div>
+          )}
+
+          {scanned && !scanLoading && orphans.length === 0 && (
+            <div className="px-6 py-10 flex flex-col items-center justify-center text-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <HardDrive className="h-5 w-5 text-green-500" />
+              </div>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                Storage is clean — no orphaned files found.
+              </p>
+            </div>
+          )}
+
+          {scanned && orphans.length > 0 && (
+            <>
+              <div className="px-6 py-3 border-b border-border bg-destructive/5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-destructive">
+                  <TriangleAlert className="h-4 w-4" />
+                  <span className="text-sm font-semibold">
+                    {orphans.length} orphaned file
+                    {orphans.length > 1 ? "s" : ""} found
+                  </span>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={deleteLoading}
+                  className="gap-2"
+                >
+                  {deleteLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Delete All
+                </Button>
+              </div>
+              <ul className="divide-y divide-border">
+                {orphans.map((orphan) => (
+                  <li
+                    key={orphan.fullPath}
+                    className="px-6 py-3 flex items-center gap-3 hover:bg-accent/40 transition-colors"
+                  >
+                    <div className="h-2 w-2 rounded-full bg-destructive shrink-0" />
+                    <span className="text-sm font-mono text-foreground truncate flex-1">
+                      {orphan.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      no Photo doc
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Confirm Delete Dialog */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {orphans.length} orphaned file
+              {orphans.length > 1 ? "s" : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove these files from Firebase Storage.
+              This action cannot be undone. Thumbnail counterparts will also be
+              removed if they exist.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                deleteOrphans();
+              }}
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading ? "Deleting…" : "Delete Files"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
